@@ -5,7 +5,13 @@ require('dotenv').config();
 const port = process.env.PORT || 4000;
 
 //middleware
-app.use(cors());
+const corsOptions = {
+    origin: '*',
+    credentials: true,
+    optionSuccessStatus: 200,
+}
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 
@@ -27,6 +33,7 @@ async function run() {
         await client.connect();
 
         const collegesCollection = client.db('campusDb').collection('colleges');
+        const usersCollection = client.db("campusDb").collection("users");
 
         app.get('/colleges/rating/:minRating', async (req, res) => {
             const minRating = parseFloat(req.params.minRating);
@@ -48,7 +55,24 @@ async function run() {
             res.send(result);
         })
 
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
 
+        app.get('/allUsers', async (req, res) => {
+            const result = await usersCollection.find({}).toArray();
+            result.reverse();
+            res.send(result);
+        })
+
+        app.get('/allUsers/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await usersCollection.findOne(query);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
