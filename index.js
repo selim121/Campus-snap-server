@@ -34,6 +34,8 @@ async function run() {
 
         const collegesCollection = client.db('campusDb').collection('colleges');
         const usersCollection = client.db("campusDb").collection("users");
+        const admissionCollection = client.db("campusDb").collection("admission");
+        const feedbackCollection = client.db("campusDb").collection("feedback");
 
         app.get('/colleges/rating/:minRating', async (req, res) => {
             const minRating = parseFloat(req.params.minRating);
@@ -63,7 +65,6 @@ async function run() {
 
         app.get('/allUsers', async (req, res) => {
             const result = await usersCollection.find({}).toArray();
-            result.reverse();
             res.send(result);
         })
 
@@ -71,6 +72,48 @@ async function run() {
             const email = req.params.email;
             const query = { email: email };
             const result = await usersCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.put('/my-profile/update/:email', async(req, res) => {
+            const email = req.params.email;
+            const filter = {email: email};
+            const options = {upsert: true};
+            const updateProfile = req.body;
+            const updateDoc = {
+                $set: {
+                    name: updateProfile.name,
+                    email: updateProfile.email,
+                    university: updateProfile.university,
+                    address: updateProfile.address,
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+        app.post('/admission', async (req, res) => {
+            const info = req.body;
+            const result = await admissionCollection.insertOne(info);
+            res.send(result);
+        })
+
+        app.get('/admission/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await admissionCollection.find(query).toArray();
+            result.reverse();
+            res.send(result);
+        })
+        
+        app.post('/feedback', async (req, res) => {
+            const info = req.body;
+            const result = await feedbackCollection.insertOne(info);
+            res.send(result);
+        })
+        
+        app.get('/feedback', async (req, res) => {
+            const result = await feedbackCollection.find({}).toArray();
             res.send(result);
         })
 
